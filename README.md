@@ -57,7 +57,7 @@ To run AI-Artistry locally, you need to connect the front-end with the backend. 
     npm install
     ```
 
-4. Start the development server for the front-end and the backend:
+4. Start the development server for the front-end and the back-end:
 
 - Front-end:
     
