@@ -25,7 +25,7 @@ AI-Artistry offers the following features:
 
 ## Demo
 
-Check out our Behance page at [Behance](https://www.behance.net/gallery/164648805/AI-Image-Generator-Website-UI-Development) to see a visual showcase of AI-Artistry in action.
+Check out Behance page at [Behance](https://www.behance.net/gallery/164648805/AI-Image-Generator-Website-UI-Development) to see a visual showcase of AI-Artistry in action.
 
 You can also visit the live website at [AI-Artistry](https://ai-artistry.vercel.app) to explore the image generation and showcase features.
 
