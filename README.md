@@ -34,7 +34,7 @@ You can also visit the live website at [AI-Artistry](https://ai-artistry.vercel.
 To run AI-Artistry locally, you need to connect the front-end with the backend. Follow these steps:
 
 1. Clone the front-end repository: git clone https://github.com/Osama-D/AI-Artistry_Front-end.git
-2. Clone the backend repository: git clone https://github.com/Osama-D/AI-Artistry_Back-end.git
+2. Clone the back-end repository: git clone https://github.com/Osama-D/AI-Artistry_Back-end.git
 3. Install the dependencies for the front-end and the backend:
 
 - Front-end:
