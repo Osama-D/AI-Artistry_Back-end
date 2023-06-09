@@ -47,7 +47,7 @@ To run AI-Artistry locally, you need to connect the front-end with the backend. 
     npm install
     ```
     
-- Backend:
+- Back-end:
     
     ```
     cd AI-Artistry_Back-end
@@ -65,7 +65,7 @@ To run AI-Artistry locally, you need to connect the front-end with the backend. 
     npm run dev
     ```
     
-- Backend:
+- Back-end:
     
     ```
     npm run start
@@ -77,7 +77,7 @@ Please ensure that both the front-end and backend servers are running simultaneo
 
 ## Usage
 
-Once you have both the front-end and backend servers running, you can follow the usage instructions mentioned earlier to generate and share images using AI-Artistry. Here's a brief guide:
+Once you have both the front-end and backend servers running, you can follow the usage instructions to generate and share images using AI-Artistry. Here's a brief guide:
 
 1. On the generate page, enter your prompt in the designated input field.
 2. Click the "Generate" button to trigger the DALL-E AI and generate an image based on your prompt.
