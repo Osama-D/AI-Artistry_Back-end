@@ -188,7 +188,7 @@ export const createPost = async (req, res) => {
   try {
     const { name, prompt, photo, pinned } = req.body;
 
-    // uploading photos to cloudinary for performance improvement
+    // uploading photos to cloudinary for better performance
     const photoUrl = await cloudinary.uploader.upload(photo, {
       timeout: 12000000,
       format: "webp",
