@@ -73,7 +73,7 @@ To run AI-Artistry locally, you need to connect the front-end with the back-end.
 
 The website should now be accessible at `http://localhost:3000`, and it will be connected to the back-end server running on `http://localhost:5000`.
 
-Please ensure that both the front-end and the back-end servers are running simultaneously for the website to work correctly.
+Please ensure that both the front-end and the back-end servers are running simultaneously for the website to work correctly. Additionally, remember to update the process.env variables in your application accordingly.
 
 ## Usage
 
