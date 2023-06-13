@@ -1,6 +1,6 @@
 # AI-Artistry
 
-![behance](https://github.com/Osama-D/AI-Artistry_Back-end/assets/99812352/32d70a83-d314-4021-aca4-c99a366c2c63)
+![behance](https://github.com/Osama-D/AI-Artistry_Back-end/assets/99812352/8dae3d70-ea6e-4ca4-ac37-679435ac0659)
 
 Welcome to AI-Artistry, a web application that utilizes OpenAI's DALL-E AI to generate unique images based on user prompts. This project aims to showcase the capabilities of AI image generation and provide users with a platform to generate and share their own creations.
 
