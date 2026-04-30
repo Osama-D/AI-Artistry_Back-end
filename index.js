@@ -11,11 +11,11 @@ app.use(compression());
 
 app.use(
   cors({
-    origin: "http://localhost:3001",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type"],
+    origin: process.env.CLIENT_URL,
+    credentials: true,
   }),
 );
+
 app.use(express.json({ limit: "50mb" }));
 
 app.use("/api/v1/posts", postRoutes);
