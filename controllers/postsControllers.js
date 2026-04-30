@@ -38,6 +38,7 @@ export const generatePosts = async (req, res) => {
           Accept: "image/*",
           ...form.getHeaders(), // 🔥 IMPORTANT FIX
         },
+        timeout: 2500000, // 🔥 important
       },
     );
 
