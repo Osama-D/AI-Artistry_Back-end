@@ -4,7 +4,6 @@ import * as dotenv from "dotenv";
 
 import axios from "axios";
 import FormData from "form-data";
-import sharp from "sharp";
 
 dotenv.config();
 
@@ -48,12 +47,8 @@ export const generatePosts = async (req, res) => {
 
     const imageBuffer = Buffer.from(response.data);
 
-    const compressed = await sharp(imageBuffer)
-      .webp({ quality: 85 })
-      .toBuffer();
-
     res.status(200).json({
-      photo: compressed.toString("base64"),
+      photo: imageBuffer.toString("base64"),
     });
   } catch (error) {
     console.log("ERROR:", error?.response?.data || error.message);
