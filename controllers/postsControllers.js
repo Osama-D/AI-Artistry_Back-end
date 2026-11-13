@@ -3,7 +3,6 @@ import { v2 as cloudinary } from "cloudinary";
 import * as dotenv from "dotenv";
 
 import axios from "axios";
-import FormData from "form-data";
 
 dotenv.config();
 
@@ -20,134 +19,96 @@ cloudinary.config({
 });
 
 export const generatePosts = async (req, res) => {
+  const prompt = req.body?.prompt;
+  if (typeof prompt !== "string" || !prompt.trim()) {
+    return res.status(400).send("Enter an image prompt.");
+  }
+
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+  const apiKey = process.env.CLOUDFLARE_API_KEY?.trim();
+  if (!accountId || !apiKey) {
+    console.error("Cloudflare Workers AI credentials are missing.");
+    return res.status(503).send("Image generation is unavailable.");
+  }
+
   try {
-    const { prompt } = req.body;
-
-    const form = new FormData();
-    form.append("prompt", prompt);
-    form.append("output_format", "webp");
-
     const response = await axios.post(
-      "https://api.stability.ai/v2beta/stable-image/generate/ultra",
-      form,
+      `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+      { prompt: prompt.trim(), steps: 4 },
       {
-        responseType: "arraybuffer",
-        headers: {
-          Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
-          Accept: "image/*",
-          ...form.getHeaders(), // 🔥 IMPORTANT FIX
-        },
-        timeout: 2500000, // 🔥 important
+        headers: { Authorization: `Bearer ${apiKey}` },
+        timeout: 30_000,
       },
     );
 
-    if (response.status !== 200) {
-      throw new Error(`Stability error: ${response.status}`);
+    const photo = response.data?.result?.image;
+    if (response.data?.success === false || typeof photo !== "string" || !photo) {
+      console.error("Cloudflare Workers AI returned no image.");
+      return res.status(502).send("Image generation failed.");
     }
 
-    const imageBuffer = Buffer.from(response.data);
-
-    res.status(200).json({
-      photo: imageBuffer.toString("base64"),
-    });
+    return res.status(200).json({ photo });
   } catch (error) {
-    console.log("ERROR:", error?.response?.data || error.message);
-    res.status(500).send("Image generation failed");
+    const status = error?.response?.status;
+    console.error("Cloudflare Workers AI request failed.", {
+      status,
+      providerCodes: error?.response?.data?.errors?.map?.(({ code }) => code),
+      code: error?.code,
+    });
+
+    if (status === 429) {
+      return res.status(429).send("Image generation limit reached. Try again later.");
+    }
+
+    return res.status(502).send("Image generation failed.");
   }
 };
 
 export const getPosts = async (req, res) => {
+  const page = Number(req.query.page ?? 1);
+  const perPage = 8;
+  const offset = (page - 1) * perPage;
+  if (!Number.isSafeInteger(offset) || !Number.isInteger(page) || page < 1) {
+    return res.status(400).json({ success: false, message: "Invalid page." });
+  }
+
   try {
     const databases = new Databases(client);
+    const list = (queries) =>
+      databases.listDocuments(process.env.DATABASE_ID, process.env.COLLECTION_ID, queries);
+    const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
 
-    const page = req.query.page || 1;
-    const perPage = 8; // Define the number of documents per page
-
-    const search = req.query.search || "";
     if (search) {
-      // If there is a search term provided
-
-      const searchQuery = [
+      const data = await list([
         Query.limit(perPage),
-        Query.offset((page - 1) * perPage),
+        Query.offset(offset),
         Query.search("prompt", search),
-        Query.orderDesc("prompt"), // Sort the search results by prompt in descending order
-      ];
-
-      // Retrieve searched documents
-      const searchedDocuments = await databases.listDocuments(
-        process.env.DATABASE_ID,
-        process.env.COLLECTION_ID,
-        searchQuery,
-      );
-      const searchDocuments = [[...searchedDocuments.documents]];
-      const searchTotal = searchedDocuments.total;
-
-      const searchResponseData = {
-        documents: searchDocuments[0],
-        total: searchTotal,
-      };
-      res.status(200).json({
-        success: true,
-        data: searchResponseData,
-        type: "appWrite search",
-      });
-    } else {
-      // If no search term is provided
-
-      const pinnedQuery = [
-        Query.limit(3), // Limit the number of pinned documents to 3
-        Query.offset((page - 1) * perPage),
-        Query.equal("pinned", true), // Filter for documents where "pinned" is true
-        Query.orderAsc("$createdAt"), // Sort the pinned documents based on createdAt in ascending order
-      ];
-
-      const unpinnedQuery = [
-        Query.limit(page === 1 ? perPage - 3 : perPage), // Subtracting the limit for the 3 pinned documents if page === 1 (which means it will only bring 5 unpinned data)
-        Query.offset(
-          page === 1 ? (page - 1) * perPage : (page - 1) * perPage - 3,
-        ), // if page === 1 you will start cutting data from 0 IF NOT you will start cutting data from 5 instead of 8 since we have brought only 5 unpinned data in page 1
-        Query.equal("pinned", false), // Filter for documents where "pinned" is false
-        Query.orderDesc("$createdAt"), // Sort the unpinned documents based on createdAt in descending order
-      ];
-
-      // Retrieve pinned documents
-      const pinnedDocuments = await databases.listDocuments(
-        process.env.DATABASE_ID,
-        process.env.COLLECTION_ID,
-        pinnedQuery,
-      );
-
-      // Retrieve unpinned documents
-      const unpinnedDocuments = await databases.listDocuments(
-        process.env.DATABASE_ID,
-        process.env.COLLECTION_ID,
-        unpinnedQuery,
-      );
-
-      // Combine the pinned and unpinned documents for page 1 and bring the rest if page > 1 without pinned documents
-      const documents = [
-        page === 1
-          ? [...pinnedDocuments.documents, ...unpinnedDocuments.documents]
-          : [...unpinnedDocuments.documents],
-      ];
-
-      const total = pinnedDocuments.total + unpinnedDocuments.total;
-
-      const responseData = {
-        documents: documents[0],
-        total: total,
-      };
-
-      res.status(200).json({
-        success: true,
-        data: responseData,
-        type: "appWrite",
-      });
+        Query.orderDesc("prompt"),
+      ]);
+      return res.status(200).json({ success: true, data, type: "appWrite search" });
     }
+
+    const pinned = await list([
+      Query.equal("pinned", true),
+      Query.orderAsc("$createdAt"),
+      Query.limit(perPage),
+      Query.offset(offset),
+    ]);
+    const remaining = perPage - pinned.documents.length;
+    const regular = await list([
+      Query.equal("pinned", false),
+      Query.orderDesc("$createdAt"),
+      Query.limit(Math.max(1, remaining)),
+      Query.offset(remaining ? Math.max(0, offset - pinned.total) : 0),
+    ]);
+    const data = {
+      documents: [...pinned.documents, ...regular.documents.slice(0, remaining)],
+      total: pinned.total + regular.total,
+    };
+    return res.status(200).json({ success: true, data, type: "appWrite" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, message: error });
+    return res.status(500).json({ success: false, message: error });
   }
 };
 
@@ -212,14 +173,14 @@ export const createPost = async (req, res) => {
 
     const databases = new Databases(client);
 
-    databases.createDocument(
+    const document = await databases.createDocument(
       process.env.DATABASE_ID,
       process.env.COLLECTION_ID,
       ID.unique(),
       payload,
     );
 
-    res.status(201).json({ success: true, data: payload, type: "appWrite" });
+    res.status(201).json({ success: true, data: document, type: "appWrite" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: error });
